@@ -1,3 +1,4 @@
+use std::io::Read;
 use std::path::Path;
 use std::sync::Arc;
 use tokio::fs;
@@ -5,6 +6,7 @@ use tokio::io::AsyncWriteExt;
 
 use crate::io::ReadAt;
 use anyhow::{bail, Result};
+use flate2::read::DeflateDecoder;
 
 use super::parser::ZipParser;
 use super::structures::{CompressionMethod, ZipFileEntry};
@@ -28,22 +30,35 @@ impl<R: ReadAt> ZipExtractor<R> {
 
     /// Extract file data to memory
     pub async fn extract_to_memory(&self, entry: &ZipFileEntry) -> Result<Vec<u8>> {
-        // Check compression method
-        if entry.compression_method != CompressionMethod::Stored {
-            bail!(
-                "Unsupported compression method: {} (only STORED/uncompressed is supported)",
-                entry.compression_method.as_u16()
-            );
-        }
-
         // Get data offset
         let data_offset = self.parser.get_data_offset(entry).await?;
 
-        // Read file data
-        let mut buf = vec![0u8; entry.uncompressed_size as usize];
-        self.parser.reader().read_at(data_offset, &mut buf).await?;
+        match entry.compression_method {
+            CompressionMethod::Stored => {
+                // Read uncompressed data directly
+                let mut buf = vec![0u8; entry.uncompressed_size as usize];
+                self.parser.reader().read_at(data_offset, &mut buf).await?;
+                Ok(buf)
+            }
+            CompressionMethod::Deflate => {
+                // Read compressed data
+                let mut compressed = vec![0u8; entry.compressed_size as usize];
+                self.parser
+                    .reader()
+                    .read_at(data_offset, &mut compressed)
+                    .await?;
 
-        Ok(buf)
+                // Decompress using flate2
+                let mut decoder = DeflateDecoder::new(&compressed[..]);
+                let mut decompressed = Vec::with_capacity(entry.uncompressed_size as usize);
+                decoder.read_to_end(&mut decompressed)?;
+
+                Ok(decompressed)
+            }
+            CompressionMethod::Unknown(method) => {
+                bail!("Unsupported compression method: {}", method);
+            }
+        }
     }
 
     /// Extract file to disk
