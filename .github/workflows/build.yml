@@ -152,8 +152,6 @@ jobs:
           *-pc-windows-*) EXE_suffix=".exe" ;;
         esac;
 
-        ls target/${target}/release/
-
         # Setup paths
         BIN_NAME="${name}${EXE_suffix}"
         BIN_PATH="target/${target}/release/${BIN_NAME}"
@@ -161,6 +159,7 @@ jobs:
         # Let subsequent steps know where to find the binary
         echo "BIN_PATH=${BIN_PATH}" >> $GITHUB_OUTPUT
         echo "BIN_NAME=${BIN_NAME}" >> $GITHUB_OUTPUT
+        echo "EXE_suffix=${EXE_suffix}" >> $GITHUB_OUTPUT
 
     - name: Prepare binary artifact
       id: package
@@ -168,16 +167,15 @@ jobs:
       env:
         BIN_PATH: ${{ steps.bin.outputs.BIN_PATH }}
         BIN_NAME: ${{ steps.bin.outputs.BIN_NAME }}
+        EXE_suffix: ${{ steps.bin.outputs.EXE_suffix }}
       run: |
         # Set artifact name
         ARTIFACT_NAME=${name}-${target}
         echo "ARTIFACT_NAME=${ARTIFACT_NAME}" >> $GITHUB_OUTPUT
 
         # Copy binary to artifact name for release upload
-        cp "${BIN_PATH}" "${ARTIFACT_NAME}"
-        RELEASE_PATH=$(realpath "${ARTIFACT_NAME}")
-        echo "ARTIFACT_PATH=${BIN_PATH}" >> $GITHUB_OUTPUT
-        echo "RELEASE_PATH=${RELEASE_PATH}" >> $GITHUB_OUTPUT
+        cp "${BIN_PATH}" "${ARTIFACT_NAME}${EXE_suffix}"
+        echo "ARTIFACT_PATH=$(realpath "${ARTIFACT_NAME}${EXE_suffix}")" >> $GITHUB_OUTPUT
 
     - name: "Artifact upload: binary"
       id: upload-binary
@@ -197,13 +195,13 @@ jobs:
       uses: actions/attest-build-provenance@v3
       if: steps.is-release.outputs.IS_RELEASE
       with:
-        subject-path: ${{ steps.package.outputs.RELEASE_PATH }}
+        subject-path: ${{ steps.package.outputs.ARTIFACT_PATH }}
 
     - name: Publish binaries to GitHub Release
       uses: softprops/action-gh-release@6da8fa9354ddfdc4aeace5fc48d7f679b5214090 # v2.4.1
       if: steps.is-release.outputs.IS_RELEASE
       with:
-        files: ${{ steps.package.outputs.RELEASE_PATH }}
+        files: ${{ steps.package.outputs.ARTIFACT_PATH }}
         draft: false
         prerelease: false
         generate_release_notes: true
