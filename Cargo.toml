@@ -19,3 +19,10 @@ anyhow = "1.0"
 async-trait = "0.1"
 byteorder = "1.5"
 flate2 = "1.0"
+
+[profile.release]
+strip = true
+opt-level = "z"       # Minimize binary size
+lto = true            # Link-time optimization
+codegen-units = 1     # Maximum optimization
+panic = "abort"       # Reduce binary size
