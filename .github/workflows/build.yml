@@ -175,7 +175,7 @@ jobs:
 
         # Copy binary to artifact name for release upload
         cp "${BIN_PATH}" "${ARTIFACT_NAME}${EXE_suffix}"
-        echo "ARTIFACT_PATH=$(realpath "${ARTIFACT_NAME}${EXE_suffix}")" >> $GITHUB_OUTPUT
+        echo "ARTIFACT_PATH=${ARTIFACT_NAME}${EXE_suffix}" >> $GITHUB_OUTPUT
 
     - name: "Artifact upload: binary"
       id: upload-binary
