@@ -191,7 +191,7 @@ jobs:
       uses: actions/attest-build-provenance@v3
       if: steps.is-release.outputs.IS_RELEASE
       with:
-        subject-name: ${{ steps.package.outputs.ARTIFACT_NAME }}
+        subject-path: ${{ steps.package.outputs.ARTIFACT_PATH }}
 
     - name: Publish binaries to GitHub Release
       uses: softprops/action-gh-release@6da8fa9354ddfdc4aeace5fc48d7f679b5214090 # v2.4.1
