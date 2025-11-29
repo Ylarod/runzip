@@ -1,6 +1,6 @@
 [package]
 name = "runzip"
-version = "0.1.5"
+version = "0.1.6"
 authors = ["Ylarod <me@ylarod.cn>"]
 repository = "https://github.com/Ylarod/runzip"
 keywords = ["unzip", "http", "cli"]
