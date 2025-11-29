@@ -170,7 +170,7 @@ jobs:
         BIN_NAME: ${{ steps.bin.outputs.BIN_NAME }}
       run: |
         # Set artifact name
-        ARTIFACT_NAME=${name}-${target}${BIN_NAME##*.}
+        ARTIFACT_NAME=${name}-${target}
         echo "ARTIFACT_NAME=${ARTIFACT_NAME}" >> $GITHUB_OUTPUT
 
         # Copy binary to artifact name for release upload
