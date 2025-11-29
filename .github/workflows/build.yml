@@ -194,11 +194,14 @@ jobs:
         subject-name: ${{ steps.package.outputs.ARTIFACT_NAME }}
         subject-digest: sha256::${{ steps.upload-binary.outputs.artifact-digest }}
 
-    - name: Publish binaries
+    - name: Publish binaries to GitHub Release
       uses: softprops/action-gh-release@6da8fa9354ddfdc4aeace5fc48d7f679b5214090 # v2.4.1
       if: steps.is-release.outputs.IS_RELEASE
       with:
         files: ${{ steps.package.outputs.ARTIFACT_PATH }}
+        draft: false
+        prerelease: false
+        generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
