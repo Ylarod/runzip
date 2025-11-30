@@ -78,12 +78,21 @@ async fn process_zip<R: ReadAt + 'static>(reader: Arc<R>, cli: &Cli) -> Result<(
             }
 
             // If specific files are requested via positional arguments,
-            // only include entries that match (by substring or glob pattern)
+            // only include entries that match
             if !cli.files.is_empty() {
-                let matches = cli
-                    .files
-                    .iter()
-                    .any(|f| e.file_name.contains(f) || glob_match(f, &e.file_name));
+                let matches = cli.files.iter().any(|f| {
+                    if has_glob_chars(f) {
+                        // Pattern contains wildcards: use glob matching
+                        glob_match(f, &e.file_name)
+                    } else {
+                        // No wildcards: exact match on filename or full path
+                        let basename = Path::new(&e.file_name)
+                            .file_name()
+                            .map(|s| s.to_string_lossy())
+                            .unwrap_or_default();
+                        e.file_name == *f || basename == *f
+                    }
+                });
                 if !matches {
                     return false;
                 }
@@ -103,8 +112,9 @@ async fn process_zip<R: ReadAt + 'static>(reader: Arc<R>, cli: &Cli) -> Result<(
         .collect();
 
     // Extract each matching file
+    let multiple_files = cli.pipe && files_to_extract.len() > 1;
     for entry in files_to_extract {
-        extract_file(&extractor, entry, cli).await?;
+        extract_file(&extractor, entry, cli, multiple_files).await?;
     }
 
     Ok(())
@@ -216,6 +226,7 @@ async fn list_files<R: ReadAt + 'static>(extractor: &ZipExtractor<R>, verbose: b
 /// * `extractor` - The ZIP extractor instance
 /// * `entry` - The ZIP file entry to extract
 /// * `cli` - Parsed command-line arguments
+/// * `show_filename` - If true, print filename marker before content (for pipe mode with multiple files)
 ///
 /// # Returns
 ///
@@ -224,9 +235,17 @@ async fn extract_file<R: ReadAt + 'static>(
     extractor: &ZipExtractor<R>,
     entry: &ZipFileEntry,
     cli: &Cli,
+    show_filename: bool,
 ) -> Result<()> {
     // Pipe mode: write file contents directly to stdout
     if cli.pipe {
+        if show_filename {
+            use tokio::io::AsyncWriteExt;
+            let mut stdout = tokio::io::stdout();
+            stdout
+                .write_all(format!("--- {} ---\n", entry.file_name).as_bytes())
+                .await?;
+        }
         return extractor.extract_to_stdout(entry).await;
     }
 
@@ -286,6 +305,19 @@ async fn extract_file<R: ReadAt + 'static>(
     extractor.extract_to_file(entry, &output_path).await?;
 
     Ok(())
+}
+
+/// Check if a pattern contains glob wildcard characters.
+///
+/// # Arguments
+///
+/// * `pattern` - The pattern to check
+///
+/// # Returns
+///
+/// Returns `true` if the pattern contains `*` or `?` wildcards.
+fn has_glob_chars(pattern: &str) -> bool {
+    pattern.contains('*') || pattern.contains('?')
 }
 
 /// Simple glob pattern matching supporting `*` and `?` wildcards.
