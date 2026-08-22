@@ -65,6 +65,7 @@ impl HttpRangeReader {
     /// # Arguments
     ///
     /// * `url` - The HTTP or HTTPS URL of the ZIP file
+    /// * `client` - The reqwest Client.
     ///
     /// # Returns
     ///
@@ -76,9 +77,7 @@ impl HttpRangeReader {
     /// - The HTTP request fails
     /// - The server doesn't support Range requests
     /// - The server doesn't provide Content-Length
-    pub async fn new(url: String) -> Result<Self> {
-        // Create HTTP client with reasonable timeout
-        let client = Client::builder().timeout(Duration::from_secs(30)).build()?;
+    pub async fn new_with_client(url: String, client: Client) -> Result<Self> {
 
         // Send HEAD request to check server capabilities
         let resp = client.head(&url).send().await?;
@@ -114,6 +113,35 @@ impl HttpRangeReader {
             transferred_bytes: AtomicU64::new(0),
             max_retry: 10,
         })
+    }
+
+    /// Create a new HTTP Range reader for the given URL.
+    /// This function creates a default HTTP client.
+    ///
+    /// This constructor performs a HEAD request to:
+    /// 1. Verify the server responds successfully
+    /// 2. Check for Range request support via `Accept-Ranges` header
+    /// 3. Obtain the file size from `Content-Length` header
+    ///
+    /// # Arguments
+    ///
+    /// * `url` - The HTTP or HTTPS URL of the ZIP file
+    ///
+    /// # Returns
+    ///
+    /// A configured reader ready for random-access reads.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - The HTTP request fails
+    /// - The server doesn't support Range requests
+    /// - The server doesn't provide Content-Length
+    pub async fn new(url: String) -> Result<Self> {
+        // Create HTTP client with reasonable timeout
+        let client = Client::builder().timeout(Duration::from_secs(30)).build()?;
+
+        Self::new_with_client(url, client).await
     }
 
     /// Get the total bytes transferred from the network.
