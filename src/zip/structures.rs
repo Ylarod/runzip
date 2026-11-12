@@ -342,7 +342,11 @@ pub const LFH_SIZE: usize = 30;
 ///
 /// ## Example
 ///
-/// ```ignore
+/// ```no_run
+/// # use std::{path::Path, sync::Arc};
+/// # use runzip::{LocalFileReader, ZipExtractor};
+/// # async fn example() -> anyhow::Result<()> {
+/// # let extractor = ZipExtractor::new(Arc::new(LocalFileReader::new(Path::new("archive.zip"))?));
 /// for entry in extractor.list_files().await? {
 ///     println!("{}: {} bytes (compressed: {})",
 ///         entry.file_name,
@@ -350,6 +354,8 @@ pub const LFH_SIZE: usize = 30;
 ///         entry.compressed_size
 ///     );
 /// }
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug, Clone)]
 pub struct ZipFileEntry {
@@ -387,9 +393,16 @@ impl ZipFileEntry {
     ///
     /// # Example
     ///
-    /// ```ignore
+    /// ```
+    /// # use runzip::{zip::CompressionMethod, ZipFileEntry};
+    /// # let entry = ZipFileEntry {
+    /// #     file_name: "a.txt".into(), compression_method: CompressionMethod::Stored,
+    /// #     compressed_size: 0, uncompressed_size: 0, crc32: 0, lfh_offset: 0,
+    /// #     last_mod_time: 0, last_mod_date: 0x586F, is_directory: false,
+    /// # };
     /// let (year, month, day) = entry.mod_date();
     /// println!("Modified: {}-{:02}-{:02}", year, month, day);
+    /// # assert_eq!((year, month, day), (2024, 3, 15));
     /// ```
     pub fn mod_date(&self) -> (u16, u8, u8) {
         let day = (self.last_mod_date & 0x1F) as u8;
@@ -411,9 +424,16 @@ impl ZipFileEntry {
     ///
     /// # Example
     ///
-    /// ```ignore
+    /// ```
+    /// # use runzip::{zip::CompressionMethod, ZipFileEntry};
+    /// # let entry = ZipFileEntry {
+    /// #     file_name: "a.txt".into(), compression_method: CompressionMethod::Stored,
+    /// #     compressed_size: 0, uncompressed_size: 0, crc32: 0, lfh_offset: 0,
+    /// #     last_mod_time: 0x6DAF, last_mod_date: 0, is_directory: false,
+    /// # };
     /// let (hour, minute, second) = entry.mod_time();
     /// println!("Time: {:02}:{:02}:{:02}", hour, minute, second);
+    /// # assert_eq!((hour, minute, second), (13, 45, 30));
     /// ```
     pub fn mod_time(&self) -> (u8, u8, u8) {
         let second = ((self.last_mod_time & 0x1F) * 2) as u8;

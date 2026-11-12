@@ -41,13 +41,21 @@ const MAX_COMMENT_SIZE: u64 = 65535;
 ///
 /// ## Example
 ///
-/// ```ignore
+/// ```no_run
+/// # use std::{path::Path, sync::Arc};
+/// # use runzip::LocalFileReader;
+/// use runzip::zip::ZipParser;
+///
+/// # async fn example() -> anyhow::Result<()> {
+/// # let reader = Arc::new(LocalFileReader::new(Path::new("archive.zip"))?);
 /// let parser = ZipParser::new(reader);
 /// let entries = parser.list_files().await?;
 /// for entry in entries {
 ///     let offset = parser.get_data_offset(&entry).await?;
 ///     // Read file data from offset...
 /// }
+/// # Ok(())
+/// # }
 /// ```
 pub struct ZipParser<R: ReadAt> {
     /// The underlying data source
@@ -318,7 +326,7 @@ impl<R: ReadAt> ZipParser<R> {
     ///
     /// # Arguments
     ///
-    /// * `entry` - The file entry from [`list_files()`]
+    /// * `entry` - The file entry from [`list_files()`](Self::list_files)
     ///
     /// # Returns
     ///
@@ -354,7 +362,7 @@ impl<R: ReadAt> ZipParser<R> {
     /// Get a reference to the underlying reader.
     ///
     /// Useful for reading file data after getting the offset
-    /// from [`get_data_offset()`].
+    /// from [`get_data_offset()`](Self::get_data_offset).
     ///
     /// # Returns
     ///

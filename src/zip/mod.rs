@@ -7,9 +7,9 @@
 //!
 //! The module is organized into three main components:
 //!
-//! - [`structures`]: Data structures representing ZIP format elements (EOCD, file headers, etc.)
-//! - [`parser`]: Low-level parsing of ZIP structures from raw bytes
-//! - [`extractor`]: High-level extraction API for end users
+//! - `structures`: Data structures representing ZIP format elements (EOCD, file headers, etc.)
+//! - `parser`: Low-level parsing of ZIP structures from raw bytes ([`ZipParser`])
+//! - `extractor`: High-level extraction API for end users ([`ZipExtractor`])
 //!
 //! ## ZIP Format Overview
 //!

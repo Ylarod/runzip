@@ -33,7 +33,7 @@ use anyhow::{Result, anyhow, bail};
 /// ## Example
 ///
 /// ```no_run
-/// use runzip::HttpRangeReader;
+/// use runzip::{HttpRangeReader, ReadAt};
 ///
 /// # async fn example() -> anyhow::Result<()> {
 /// let reader = HttpRangeReader::new("https://example.com/large.zip".to_string()).await?;

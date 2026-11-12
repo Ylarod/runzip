@@ -23,7 +23,7 @@ use std::path::Path;
 ///
 /// ```no_run
 /// use std::path::Path;
-/// use runzip::LocalFileReader;
+/// use runzip::{LocalFileReader, ReadAt};
 ///
 /// # fn main() -> anyhow::Result<()> {
 /// let reader = LocalFileReader::new(Path::new("archive.zip"))?;
