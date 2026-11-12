@@ -72,9 +72,16 @@ impl<R: ReadAt> ZipExtractor<R> {
     ///
     /// # Example
     ///
-    /// ```ignore
+    /// ```no_run
+    /// use std::path::Path;
+    /// use std::sync::Arc;
+    /// use runzip::{LocalFileReader, ZipExtractor};
+    ///
+    /// # fn main() -> anyhow::Result<()> {
     /// let reader = Arc::new(LocalFileReader::new(Path::new("archive.zip"))?);
     /// let extractor = ZipExtractor::new(reader);
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn new(reader: Arc<R>) -> Self {
         Self {
@@ -97,10 +104,16 @@ impl<R: ReadAt> ZipExtractor<R> {
     ///
     /// # Example
     ///
-    /// ```ignore
+    /// ```no_run
+    /// # use std::{path::Path, sync::Arc};
+    /// # use runzip::{LocalFileReader, ZipExtractor};
+    /// # async fn example() -> anyhow::Result<()> {
+    /// # let extractor = ZipExtractor::new(Arc::new(LocalFileReader::new(Path::new("archive.zip"))?));
     /// for entry in extractor.list_files().await? {
     ///     println!("{}: {} bytes", entry.file_name, entry.uncompressed_size);
     /// }
+    /// # Ok(())
+    /// # }
     /// ```
     pub async fn list_files(&self) -> Result<Vec<ZipFileEntry>> {
         self.parser.list_files().await
@@ -113,7 +126,7 @@ impl<R: ReadAt> ZipExtractor<R> {
     ///
     /// # Arguments
     ///
-    /// * `entry` - The file entry to extract (from [`list_files()`])
+    /// * `entry` - The file entry to extract (from [`list_files()`](Self::list_files))
     ///
     /// # Returns
     ///
@@ -128,14 +141,21 @@ impl<R: ReadAt> ZipExtractor<R> {
     /// # Memory Usage
     ///
     /// This method loads the entire file into memory. For large files,
-    /// consider using [`extract_to_file()`] instead.
+    /// consider using [`extract_to_file()`](Self::extract_to_file) instead.
     ///
     /// # Example
     ///
-    /// ```ignore
+    /// ```no_run
+    /// # use std::{path::Path, sync::Arc};
+    /// # use runzip::{LocalFileReader, ZipExtractor};
+    /// # async fn example() -> anyhow::Result<()> {
+    /// # let extractor = ZipExtractor::new(Arc::new(LocalFileReader::new(Path::new("archive.zip"))?));
+    /// # let entry = extractor.list_files().await?.remove(0);
     /// let data = extractor.extract_to_memory(&entry).await?;
     /// let text = String::from_utf8_lossy(&data);
     /// println!("{}", text);
+    /// # Ok(())
+    /// # }
     /// ```
     pub async fn extract_to_memory(&self, entry: &ZipFileEntry) -> Result<Vec<u8>> {
         // Calculate where the actual file data begins
@@ -189,8 +209,15 @@ impl<R: ReadAt> ZipExtractor<R> {
     ///
     /// # Example
     ///
-    /// ```ignore
+    /// ```no_run
+    /// # use std::{path::Path, sync::Arc};
+    /// # use runzip::{LocalFileReader, ZipExtractor};
+    /// # async fn example() -> anyhow::Result<()> {
+    /// # let extractor = ZipExtractor::new(Arc::new(LocalFileReader::new(Path::new("archive.zip"))?));
+    /// # let entry = extractor.list_files().await?.remove(0);
     /// extractor.extract_to_file(&entry, Path::new("output/file.txt")).await?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub async fn extract_to_file(&self, entry: &ZipFileEntry, output_path: &Path) -> Result<()> {
         // Ensure parent directories exist
@@ -225,9 +252,16 @@ impl<R: ReadAt> ZipExtractor<R> {
     ///
     /// # Example
     ///
-    /// ```ignore
+    /// ```no_run
+    /// # use std::{path::Path, sync::Arc};
+    /// # use runzip::{LocalFileReader, ZipExtractor};
+    /// # async fn example() -> anyhow::Result<()> {
+    /// # let extractor = ZipExtractor::new(Arc::new(LocalFileReader::new(Path::new("archive.zip"))?));
+    /// # let entry = extractor.list_files().await?.remove(0);
     /// // Equivalent to: runzip -p archive.zip file.txt | cat
     /// extractor.extract_to_stdout(&entry).await?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub async fn extract_to_stdout(&self, entry: &ZipFileEntry) -> Result<()> {
         let data = self.extract_to_memory(entry).await?;

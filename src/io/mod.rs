@@ -33,7 +33,10 @@ use async_trait::async_trait;
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```
+/// use anyhow::Result;
+/// use runzip::ReadAt;
+///
 /// async fn read_header<R: ReadAt>(reader: &R) -> Result<[u8; 4]> {
 ///     let mut buf = [0u8; 4];
 ///     reader.read_at(0, &mut buf).await?;
